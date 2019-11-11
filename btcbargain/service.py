@@ -33,7 +33,7 @@ class BTCBargainTransactionService:
     def get_transaction(
             self, transaction: BargainTransaction
     ) -> 'BargainTransaction':
-        transaction = self.repository.get_transaction(transaction.bargain_id)
+        transaction = self.repository.get_transaction(transaction.bargain_transaction_id)
         return transaction
 
     def add_participants(

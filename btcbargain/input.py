@@ -5,23 +5,41 @@ class BargainInput:
             outpoint_index: int,
             amount: int,
             is_segwit: bool = True,
-            signature=None
+            signature=None,
+
      ):
         self.outpoint_hash = outpoint_hash
         self.outpoint_index = outpoint_index
         self.amount = amount
         self.is_segwit = is_segwit
         self.signature = signature
+        self._size = None
+
+    def set_size(self, size: int):
+        """
+        Set the input size. This method must be called by the
+        CoreWallet's method which return the input size starting from
+        the address.
+        """
+        self._size = size
 
     @property
-    def current_size(self):
-        pass
-
-    @property
-    def final_estimated_size(self):
-        pass
+    def size(self):
+        """
+        The final size of the input once signed.
+        """
+        return self._size
 
     def add_signature(self, signature: 'BargainSignature'):
+        """
+        !!Achtung!!
+
+        Signature Hash Type: SIGHASH_NONE|ANYONECANPAY = 0x82
+        This flag means the signature is committed ONLY to the input.
+
+        This is *** VERY HARMFUL ***
+        and the signature must be sealed by a second one of type SIGHASH_ALL.
+        """
         self.signature = signature
 
 

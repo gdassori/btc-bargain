@@ -8,6 +8,7 @@ from btcbargain.participant import BargainParticipant
 class BargainTransaction:
     def __init__(self):
         self._participants = []
+        self.bargain_transaction_id = None
 
     @property
     def total_size(self) -> int:
@@ -19,11 +20,14 @@ class BargainTransaction:
 
     @property
     def inputs(self) -> typing.List[BargainInput]:
-        pass
+        res = []
+        for p in self._participants:
+            res.extend(p.tx_inputs)
+        return res
 
     @property
     def outputs(self) -> typing.List[BargainOutput]:
-        pass
+        return [p.output for p in self._participants]
 
     @property
     def current_absolute_fee_paid(self) -> int:
