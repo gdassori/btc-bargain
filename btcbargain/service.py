@@ -7,11 +7,9 @@ from btcbargain.input import BargainInput, BargainSignature
 class BTCBargainTransactionService:
     def __init__(
             self,
-            signature_service,
-            repository
+            signature_service
     ):
         self.signature_service = signature_service
-        self.repository = repository
 
     def _add_output(
             self, output: BargainOutput
@@ -23,17 +21,7 @@ class BTCBargainTransactionService:
     ):
         pass
 
-    def create_transaction(self, *participants: BargainParticipant):
-        self.repository.get_transaction()  # FIXME TODO
-        transaction = BargainTransaction()
-        for p in participants:
-            transaction.add_participant(p)
-        return transaction
-
-    def get_transaction(
-            self, transaction: BargainTransaction
-    ) -> 'BargainTransaction':
-        transaction = self.repository.get_transaction(transaction.bargain_transaction_id)
+    def get_transaction(self, transaction: BargainTransaction) -> 'BargainTransaction':
         return transaction
 
     def add_participants(

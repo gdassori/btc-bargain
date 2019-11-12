@@ -6,14 +6,25 @@ class BargainInput:
             amount: int,
             is_segwit: bool = True,
             signature=None,
+            size=0,
+            script=None
 
      ):
         self.outpoint_hash = outpoint_hash
         self.outpoint_index = outpoint_index
-        self.amount = amount
+        self._amount = amount
         self.is_segwit = is_segwit
         self.signature = signature
-        self._size = None
+        self._size = size
+        self._script = script
+
+    @property
+    def script(self):
+        return self._script
+
+    @property
+    def amount(self):
+        return int(self._amount)
 
     def set_size(self, size: int):
         """
@@ -21,14 +32,15 @@ class BargainInput:
         CoreWallet's method which return the input size starting from
         the address.
         """
-        self._size = size
+        self._size = int(size)
+        return self
 
     @property
     def size(self):
         """
         The final size of the input once signed.
         """
-        return self._size
+        return int(self._size)
 
     def add_signature(self, signature: 'BargainSignature'):
         """
@@ -41,6 +53,20 @@ class BargainInput:
         and the signature must be sealed by a second one of type SIGHASH_ALL.
         """
         self.signature = signature
+        return self
+
+    def to_json(self):
+        return {
+            'outpoint_hash': self.outpoint_hash,
+            'outpoint_index': self.outpoint_index,
+            'amount': self.amount,
+            'is_segwit': self.is_segwit,
+            'size': self.size,
+            'signature': self.signature
+        }
+
+    def verify_signature_for_sighash_type(self, sighash_type):
+        return True
 
 
 class BargainSignature:
