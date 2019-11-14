@@ -12,3 +12,11 @@ class InvalidClientSignature(BTCBargainException):
 
 class InconsistentSignaturesAmount(BTCBargainException):
     pass
+
+
+class MissingSealerRecipient(BTCBargainException):
+    pass
+
+
+class MissingSealerSignature(BTCBargainException):
+    pass

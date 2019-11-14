@@ -1,7 +1,7 @@
+from btcbargain.input import BargainInput
 from btcbargain.output import BargainOutput
 from btcbargain.participant import BargainParticipant
 from btcbargain.transaction import BargainTransaction
-from btcbargain.input import BargainInput, BargainSignature
 
 
 class BTCBargainTransactionService:
@@ -30,12 +30,6 @@ class BTCBargainTransactionService:
         pass
 
     def seal_transaction(
-            self, transaction: BargainTransaction, *signatures: BargainSignature
+            self, transaction: BargainTransaction, *signatures: str
     ):
-        """
-        This method MUST apply the SIGHASH_ALL signature
-        to all the participant's inputs.
-        Due the behaviour of SIGHASH_ALL, the sealing must be done
-        once all the outputs are defined.
-        """
         pass

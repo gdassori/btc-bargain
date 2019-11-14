@@ -1,31 +1,47 @@
 import typing
 
 import bitcoin
-from bitcoin import SIGHASH_ANYONECANPAY, SIGHASH_NONE
 
 from btcbargain import exceptions
 from btcbargain.input import BargainInput
 from btcbargain.output import BargainOutput
 from btcbargain.participant import BargainParticipant
 
-
 REPLACE_BY_FEE_SEQUENCE_NUMBER = 0xffffffff - 2
 
 
 class BargainTransaction:
-    """
-    Inputs order MUST be kept.
-    A participant nor its input can leave the transaction, otherwise all the cur_input_index+N inputs
-    signatures would be invalidated by shifting their position inside the outpoints list.
-    """
     def __init__(self):
         self._participants = []
+        self._sealer = None
         self.bargain_transaction_id = None
-        self._sealing_signatures = []
+        self._raw = None
 
     @property
-    def sealing_signatures(self):
-        return self._sealing_signatures
+    def sealed(self):
+        if not self.sealer:
+            return False
+        status = []
+        for p in self.participants:
+            for i in p.tx_inputs:
+                status.append(
+                    self.sealer.signatures.get(i.outpoint_hash + ':' + str(i.outpoint_index))
+                )
+        return bool(status and all(status))
+
+    @property
+    def sealer(self):
+        return self._sealer
+
+    @sealer.setter
+    def sealer(self, value):
+        from btcbargain.sealer import BargainSealer
+        assert isinstance(value, BargainSealer)
+        self._sealer = value
+
+    @property
+    def raw(self):
+        return self._raw
 
     @classmethod
     def create(cls, *participants) -> 'BargainTransaction':
@@ -37,8 +53,16 @@ class BargainTransaction:
     @property
     def total_size(self) -> int:
         total = 0
+        counted = []
         for p in self._participants:
+            counted.extend(['{}:{}'.format(i.outpoint_index, i.outpoint_hash) for i in p.tx_inputs])
             total += p.size_bytes
+        if self.sealer:
+            for i in self.sealer.tx_inputs:
+                if '{}:{}'.format(i.outpoint_index, i.outpoint_hash) not in counted:
+                    total += i.size
+            if self.sealer.output:
+                total += self.sealer.output.size
         return total
 
     @property
@@ -61,28 +85,31 @@ class BargainTransaction:
 
     @property
     def participants(self) -> typing.List[BargainParticipant]:
-        """
-        strictly keep this list in its original order
-        """
         return self._participants
 
     def add_participant(self, p: BargainParticipant) -> 'BargainTransaction':
         self._participants.append(p)
+        if self.raw:
+            self.make()
+        return self
+
+    def add_sealer(self, s) -> 'BargainTransaction':
+        self._sealer = s
+        if self.raw:
+            self.make()
         return self
 
     def to_json(self) -> typing.Dict:
         return {
             'bargain_transaction_id': self.bargain_transaction_id,
-            'participants': [
-                p.to_json() for p in self.participants
-            ],
-            'sealed': self.inputs and len(self.sealing_signatures) == len(self.inputs),
+            'participants': [p.to_json() for p in self.participants],
+            'sealer': self.sealer and self.sealer.to_json(),
+            'sealed': self.sealed,
             'total_size': self.total_size,
             'current_absolute_fee_paid': self.current_absolute_fee_paid,
-            'signatures': self.sealing_signatures
         }
 
-    def make(self) -> str:
+    def make(self) -> 'BargainTransaction':
         outpoints = []
         for p in self.participants:
             for i, o in enumerate(p.tx_inputs):
@@ -102,21 +129,31 @@ class BargainTransaction:
             } for o in [p.output for p in self.participants]
         ]
         rawtx = bitcoin.mktx(*outpoints, *outputs)
+        self._raw = rawtx
+        return self
+
+    def seal(self):
+        index = 0
         for p in self.participants:
             for i, o in enumerate(p.tx_inputs):
                 if o.signature:
+                    signatures = [o.signature]
+                    sealing_signature = self.sealer and self.sealer.signatures.get(
+                        o.outpoint_hash + ':' + str(o.outpoint_index), None
+                    )
+                    if not sealing_signature:
+                        raise exceptions.MissingSealerSignature(
+                            o.outpoint_hash + ':' + str(o.outpoint_index)
+                        )
+                    sealing_signature and signatures.append(sealing_signature)
                     if o.is_segwit:
-                        rawtx = bitcoin.apply_segwit_multisignatures(rawtx, i, o.script, [o.signature])
+                        assert o.script
+                        self._raw = bitcoin.apply_segwit_multisignatures(
+                            self._raw, index, o.script, signatures, nested=True
+                        )
                     else:
-                        rawtx = bitcoin.apply_multisignatures(rawtx, i, o.script, [o.signature])
-        return rawtx
-
-    def add_sealing_signatures(self, *signatures):
-        for p in self._participants:
-            if not all(len(i.signature) for i in p.tx_inputs):
-                raise exceptions.MissingClientSignature
-            if not all(i.verify_signature_for_sighash_type(SIGHASH_NONE | SIGHASH_ANYONECANPAY) for i in p.tx_inputs):
-                raise exceptions.InvalidClientSignature
-        if len(signatures) != len(self.inputs):
-            raise exceptions.InconsistentSignaturesAmount
+                        self._raw = bitcoin.apply_multisignatures(self._raw, index, o.script, signatures)
+                else:
+                    raise exceptions.MissingClientSignature
+                index += 1
         return self
