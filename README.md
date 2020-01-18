@@ -25,6 +25,7 @@ Features:
 - It reduces transaction fees.
 - It cut times for having a transaction spendable inside the system.
 - It enables high-frequencies trading between multisig half-custodian parties.
+- It may improve on-chain privacy, since the final transaction in this example will occour between Alice and Carol, potentially hiding Bob.
 
 Notes:
 
