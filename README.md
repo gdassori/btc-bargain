@@ -17,7 +17,7 @@ What happens, at this point, is the following:
 - MWPC collect the signature and the amount Alice wants to send to Bob, and store this data into a database for and undefined amount of time. At this point MWPC will refuse to cooperate in doublespending those inputs, and both the sender and the receiver must trust MWPC. But since they already established an n-o-m scheme with it, the trust is assumed.
 - Bob is instantly credited of the amount sent by Alice. There's still no onchain transaction or TXID, just an IOU from MWPC to Bob.
 - Then, Bob want to send the whole amount he received, to Carol.
-- At this point nothing happens. The input Alice previously signed will be assigned to Carol. The NONE|AOP signature is loosy enough to be still valid. Also, no transaction happens onchain, just MWPC keeps withdraw the IOU from Bob and establish a new one with Carol.
+- At this point nothing happens. The input Alice previously signed will be assigned to Carol. The NONE|AOP signature is loosy enough to be still valid. Also, no transaction happens onchain, we just see the MWPC to withdrawn the IOU from Bob and establish a new one with Carol.
 - An unlimited amount of transactions may occour before the settlement.
 - An unlimited number of participants may join the same transaction (note: onchain protocol limits).
 - At some point, MWPC "seal" the transaction with a SIGHASH_ALL signature, and this is broadcast on the chain. Both Carol and Alice would be credited of an unspent, having the same transaction id. Carol will be credited of part of the inputs initially signed by Alice and co-signed by MWPC, and Alice will receive her change, if any.
