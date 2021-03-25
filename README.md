@@ -14,7 +14,7 @@ What happens, at this point, is the following:
 
 - Alice received onchain unspents, and want to send Bitcoins to Bob. To do so Alice establish a connection with MWPC, with which she previously established a wallet. 
 - MWPC, that keeps track of Alice's UTXO, asks her to sign with SIGHASHNONE|AOP a set of inputs able to cover the amount she wish to send (let's keep the fee out for now). No onchain transaction happens.
-- MWPC collect the signature and the amount Alice wants to send to Bob, and store this data into a database for and undefined amount of time.
+- MWPC collect the signature and the amount Alice wants to send to Bob, and store this data into a database for and undefined amount of time. At this point MWPC will refuse to cooperate in doublespending those inputs, and both the sender and the receiver must trust MWPC. But since they already established an n-o-m scheme with it, the trust is assumed.
 - Bob is instantly credited of the amount sent by Alice. There's still no onchain transaction or TXID, just an IOU from MWPC to Bob.
 - Then, Bob want to send the whole amount he received, to Carol.
 - At this point nothing happens. The input Alice previously signed will be assigned to Carol. The NONE|AOP signature is loosy enough to be still valid. Also, no transaction happens onchain, just MWPC keeps withdraw the IOU from Bob and establish a new one with Carol.
@@ -37,4 +37,4 @@ Notes:
 
 Drawbacks:
 
-- Trust. Because Alice must potentially sign a big input with an insecure signature, and this means until the settlement the system can alter the recipients. But users are already into an n-o-m scheme, so anyone inside this scheme would have already opted in it and could only benefit from this implementation.
+- Trust. Because Alice must potentially sign a big input with an insecure signature, and this means until the settlement the system can alter the recipients. But, as already stated previously, those users are already into an n-o-m scheme, so anyone inside this scheme would have already opted in it and could only benefit from this implementation.
