@@ -1,6 +1,6 @@
 # btc-bargain
 
-Bitcoin Multisig Onchain Exchange Library prototype
+Multisig schemes factory for on-chain non-interactive swaps, using delegated signatures.
 
 ---
 
